@@ -3,6 +3,7 @@
 #include "GameX/renderer/camera.h"
 #include "GameX/renderer/entity.h"
 #include "GameX/renderer/light.h"
+#include "GameX/renderer/particle_group.h"
 #include "GameX/renderer/render_pipeline.h"
 
 namespace GameX::Graphics {
@@ -48,6 +49,15 @@ GAMEX_CLASS(Scene) : public grassland::vulkan::DynamicObject {
     return light;
   }
 
+  template <class ParticleGroupType, class... Args>
+  [[nodiscard]] std::unique_ptr<ParticleGroupType> CreateParticleGroup(
+      Args && ...args) {
+    auto particle_group =
+        std::make_unique<ParticleGroupType>(this, std::forward<Args>(args)...);
+    particle_groups_.insert(particle_group.get());
+    return particle_group;
+  }
+
   void DestroyCamera(Camera * camera) {
     cameras_.erase(camera);
   }
@@ -60,12 +70,24 @@ GAMEX_CLASS(Scene) : public grassland::vulkan::DynamicObject {
     lights_.erase(light);
   }
 
-  const std::set<Entity *> &Entities() const {
+  void DestroyParticleGroup(ParticleGroup * particle_group) {
+    particle_groups_.erase(particle_group);
+  }
+
+  [[nodiscard]] const std::set<Camera *> &Cameras() const {
+    return cameras_;
+  }
+
+  [[nodiscard]] const std::set<Entity *> &Entities() const {
     return entities_;
   }
 
-  const std::set<Light *> &Lights() const {
+  [[nodiscard]] const std::set<Light *> &Lights() const {
     return lights_;
+  }
+
+  [[nodiscard]] const std::set<ParticleGroup *> &ParticleGroups() const {
+    return particle_groups_;
   }
 
   bool SyncData(VkCommandBuffer cmd_buffer, uint32_t frame_index) override;
@@ -96,6 +118,7 @@ GAMEX_CLASS(Scene) : public grassland::vulkan::DynamicObject {
   std::set<Camera *> cameras_;
   std::set<Entity *> entities_;
   std::set<Light *> lights_;
+  std::set<ParticleGroup *> particle_groups_;
 
   Image *envmap_image_{};
   grassland::vulkan::Sampler *envmap_sampler_{};

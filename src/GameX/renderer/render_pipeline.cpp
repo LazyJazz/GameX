@@ -202,6 +202,33 @@ void RenderPipeline::Render(VkCommandBuffer cmd_buffer,
     vkCmdDrawIndexed(cmd_buffer, entity->Model()->IndexCount(), 1, 0, 0, 0);
   }
 
+  std::vector<ParticleGroup *> particle_groups;
+  for (auto &particle_group : scene.ParticleGroups()) {
+    particle_groups.push_back(particle_group);
+  }
+
+  std::sort(particle_groups.begin(), particle_groups.end(),
+            [](ParticleGroup *a, ParticleGroup *b) {
+              return a->Pipeline() < b->Pipeline();
+            });
+
+  grassland::vulkan::Pipeline *last_pipeline = nullptr;
+
+  for (auto &particle_group : particle_groups) {
+    if (particle_group->Pipeline() != last_pipeline) {
+      last_pipeline = particle_group->Pipeline();
+      vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        particle_group->Pipeline()->Handle());
+      vkCmdBindDescriptorSets(
+          cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+          particle_group->Pipeline()->Settings().pipeline_layout->Handle(), 0,
+          1, &camera_descriptor_set, 0, nullptr);
+    }
+
+    particle_group->Draw(cmd_buffer,
+                         renderer_->App()->VkCore()->CurrentFrame());
+  }
+
   vkCmdNextSubpass(cmd_buffer, VK_SUBPASS_CONTENTS_INLINE);
 
   std::vector<Light *> lights;
@@ -213,7 +240,7 @@ void RenderPipeline::Render(VkCommandBuffer cmd_buffer,
     return a->LightingPipeline() < b->LightingPipeline();
   });
 
-  grassland::vulkan::Pipeline *last_pipeline = nullptr;
+  last_pipeline = nullptr;
 
   VkDescriptorSet input_attachment_descriptor_set =
       film.input_attachment_set->Handle();

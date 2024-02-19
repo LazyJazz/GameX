@@ -7,6 +7,7 @@
 #include "GameX/renderer/image.h"
 #include "GameX/renderer/lights/lights.h"
 #include "GameX/renderer/model.h"
+#include "GameX/renderer/particle_groups/particle_groups.h"
 #include "GameX/renderer/render_pipeline.h"
 #include "GameX/renderer/scene.h"
 #include "GameX/utils/utils.h"

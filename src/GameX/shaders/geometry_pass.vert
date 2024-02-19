@@ -29,7 +29,7 @@ void main() {
   frag_texcoord = texcoord;
   frag_normal = normalize(
       vec3(transpose(inverse(entity_data.model)) * vec4(normal, 0.0)));
-  frag_tangent = tangent;
+  frag_tangent = vec3(normalize(entity_data.model * vec4(tangent, 0.0)));
 
   gl_Position = vec4(1, -1, 1, 1) * (camera_data.proj * camera_data.view *
                                      vec4(frag_position, 1.0));
